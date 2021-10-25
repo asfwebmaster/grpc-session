@@ -16,6 +16,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/cookie": "^0.4.1",
+    "@types/ioredis": "^4.27.8",
     "del-cli": "^4.0.1",
     "typescript": "^3.8.3"
   },
