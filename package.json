@@ -1,0 +1,28 @@
+{
+  "name": "@asfweb/grpc-session",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "build/**/*"
+  ],
+  "scripts": {
+    "clean": "del ./build/*",
+    "build": "npm run clean && tsc",
+    "pub": "git add . && git commit -m \"Updates\" && npm version patch && npm run build && npm publish"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.4.1",
+    "cookie": "^0.4.1",
+    "ioredis": "^4.28.0",
+    "moment": "^2.29.1",
+    "nanoid": "^3.1.30"
+  }
+}
