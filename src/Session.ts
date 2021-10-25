@@ -96,17 +96,18 @@ export class Session {
 
     // Seems that session does not exist in the store, we throw an error
     if (this.sessionData === null) {
-      console.log("session does not exist in store");
-
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
-    // Session has been read, let's extend expiration time
+    // Remove session if is expired
     if (this.sessionData.exp && this.sessionData.exp < moment().unix()) {
-      this.store.delete(this.sessionId);
-      console.log("session has been expired");
+      await this.store.delete(this.sessionId);
       throw new SessionError(_ERROR_SESSION_DATA);
     }
+
+    // NOTE - needs re-thinking two saves calls would be made if need to add something to the session
+    // Updates session expiration time.
+    await this.save();
 
     return this;
   }
