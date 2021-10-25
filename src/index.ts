@@ -1,4 +1,3 @@
-// Index
 import { Session } from "./Session";
 import { SessionRedisStore } from "./SessionRedisStore";
 
