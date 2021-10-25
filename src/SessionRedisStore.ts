@@ -1,3 +1,4 @@
+// Session Redis Store
 import { Store } from "./Store";
 import Redis, { ValueType } from "ioredis";
 
