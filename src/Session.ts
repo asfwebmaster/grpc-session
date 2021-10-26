@@ -5,8 +5,12 @@ import moment from "moment";
 import { nanoid } from "nanoid";
 
 import { Store } from "./Store";
-
-const _ERROR_SESSION_DATA = "Invalid session.";
+import {
+  DEV,
+  _ERROR_SESSION_DATA,
+  _ERROR_SESSION_EXPIRED,
+  _ERROR_SESSION_ID,
+} from "./constants";
 
 class SessionError extends Error {
   private __proto__?: SessionError;
@@ -30,8 +34,10 @@ interface SessionOptions {
   sessionName?: string;
 }
 
+type SessionData = { [key: string]: string | number } | null;
+
 export class Session {
-  sessionData: { [key: string]: string | number } | null; // stores session data after loading it from the store
+  sessionData: SessionData; // stores session data after loading it from the store
   sessionName: string; // session name default is _SID
   sessionId: string; // stores session id if found in metadata
   store: Store; // Store instance
@@ -61,7 +67,7 @@ export class Session {
    * @param sessionData
    * @returns Session
    */
-  start(sessionData?: { [key: string]: string | number }) {
+  start(sessionData?: SessionData) {
     this.sessionId = nanoid();
 
     this.sessionData = {};
@@ -88,7 +94,10 @@ export class Session {
     // TODO: check Authorization header as well
 
     if (!cookies[this.sessionName]) {
-      throw new SessionError(_ERROR_SESSION_DATA);
+      if (DEV) {
+        console.log("DEBUG: Could not find Session id in cookies.");
+      }
+      throw new SessionError(_ERROR_SESSION_ID);
     }
 
     this.sessionId = cookies[this.sessionName];
@@ -96,13 +105,21 @@ export class Session {
 
     // Seems that session does not exist in the store, we throw an error
     if (this.sessionData === null) {
+      if (DEV) {
+        console.log("DEBUG: Session has not been found in the store.");
+      }
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
     // Remove session if is expired
     if (this.sessionData.exp && this.sessionData.exp < moment().unix()) {
+      if (DEV) {
+        console.log(
+          "DEBUG: Session has been expired and will be removed from the store."
+        );
+      }
       await this.store.delete(this.sessionId);
-      throw new SessionError(_ERROR_SESSION_DATA);
+      throw new SessionError(_ERROR_SESSION_EXPIRED);
     }
 
     // NOTE - needs re-thinking two saves calls would be made if need to add something to the session
