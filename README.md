@@ -20,7 +20,7 @@ import { Session, SessionRedisStore } from "@asfweb/grpc-session";
 const sessionStore = new SessionRedisStore({ password: "12345" });
 
 // Creates session object
-const session = new Session(sessionStore, { expires: 60 * 30 });
+const session = new Session(sessionStore, { expires: 60 * 30 /* In seconds: 60 seconds * 30 = 30 min. */ });
 
 export default session;
 ```
@@ -61,7 +61,16 @@ export const SomeService: SomeServiceHandlers = {
         await Session.validate(metadata);
 
         // Add Session Data
-        await Session.set('someKey', 'someValue').set('anotherKey', 'anoterValue').save();
+        // chained
+        await Session
+        .set('someKey', 'someValue')
+        .set('anotherKey', 'anotherValue')
+        .save();
+        // or
+        Session.set('key1', 'value1');
+        Session.set('key2', 'value2');
+        // NOTE: Save must be executed after set in order to persist session data
+        await Session.save(); 
 
         // Get Session Data
         let someKey = Session.get('someKey');
@@ -87,3 +96,9 @@ export const SomeService: SomeServiceHandlers = {
 export default SomeService;
 
 ```
+
+#### TODO:
+- SessionFileStore
+- SessionMongoStore
+- SessionMysqlStore
+- SessionSharedConfig
