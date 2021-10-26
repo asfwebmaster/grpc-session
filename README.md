@@ -84,6 +84,6 @@ export const SomeService: SomeServiceHandlers = {
   }
 };
 
-export default UsersService;
+export default SomeService;
 
 ```
