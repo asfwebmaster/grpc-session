@@ -12,7 +12,7 @@
     "build": "npm run clean && tsc",
     "pub": "git add . && git commit -m \"Updates\" && npm version patch && npm run build && npm publish"
   },
-  "keywords": [],
+  "keywords": ["Session", "gRPC", "Redis", "Microservice"],
   "author": "",
   "license": "ISC",
   "devDependencies": {
