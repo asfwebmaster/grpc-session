@@ -94,7 +94,7 @@ export class Session {
     const cookiesHeader = call.metadata.get("cookies").toString();
     const cookies = cookie.parse(cookiesHeader);
 
-    console.log("1:", cookies);
+    console.log("1:", call.metadata);
 
     // Whether to load or start new session
     if (cookies[this.sessionName]) {
