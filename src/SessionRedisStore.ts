@@ -1,6 +1,8 @@
 // Session Store
-import { Store } from "./Store";
+import { SessionStoreError, Store } from "./Store";
 import Redis, { ValueType } from "ioredis";
+
+import type { SessionData } from "./Session";
 
 /**
  * Redis Session Store Class
@@ -32,16 +34,33 @@ export class SessionRedisStore implements Store {
    *
    * @param sessionId Identification Id
    * @param data data to store
-   * @returns Promise
+   * @returns Promise<boolean>
    */
-  set(sessionId: string, data: { [key: string]: string }) {
-    let _data: ValueType;
-    _data = JSON.stringify(data);
-    if (data.exp) {
-      return this.redis.set(sessionId, _data, "EXAT", data.exp);
-    } else {
-      return this.redis.set(sessionId, _data);
+  async set(sessionId: string, data: SessionData) {
+    try {
+      let result: string | null;
+      let _data: ValueType;
+      _data = JSON.stringify(data);
+
+      if (typeof data === "object" && !Array.isArray(data) && data !== null) {
+        result = await this.redis.set(
+          sessionId,
+          _data,
+          "EXAT",
+          typeof data.exp === "number" ? data.exp : 0
+        );
+      } else {
+        result = await this.redis.set(sessionId, _data);
+      }
+      if (result === "OK") {
+        return true;
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new SessionStoreError(err.message);
+      }
     }
+    return false;
   }
 
   /**
@@ -50,7 +69,17 @@ export class SessionRedisStore implements Store {
    * @param sessionId Identification Id
    * @returns Promise
    */
-  delete(sessionId: string) {
-    return this.redis.del(sessionId);
+  async delete(sessionId: string) {
+    try {
+      let result = await this.redis.del(sessionId);
+      if (result) {
+        return true;
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        throw new SessionStoreError(err.message);
+      }
+    }
+    return false;
   }
 }

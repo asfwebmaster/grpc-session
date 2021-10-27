@@ -29,18 +29,20 @@ class SessionError extends Error {
   }
 }
 
-interface SessionOptions {
+export interface SessionOptions {
   expires?: number; // Session expiration time in seconds
   sessionName?: string;
+  cookie?: cookie.CookieSerializeOptions;
 }
-
-type SessionData = { [key: string]: string | number } | null;
+export type Primitive = string | number | boolean | null;
+export type SessionKeyValue = Primitive | { [key: string]: Primitive };
+export type SessionData = { [key: string]: SessionKeyValue } | null;
 
 export class Session {
-  sessionData: SessionData; // stores session data after loading it from the store
-  sessionName: string; // session name default is _SID
-  sessionId: string; // stores session id if found in metadata
-  store: Store; // Store instance
+  private sessionData: SessionData; // stores session data after loading it from the store
+  private sessionName: string; // session name default is _SID
+  private sessionId: string; // stores session id if found in metadata
+  private store: Store; // Store instance
 
   options: SessionOptions; // sessionName and expiration time can be set here
 
@@ -52,7 +54,10 @@ export class Session {
    */
   constructor(
     store: Store,
-    options: SessionOptions = { sessionName: "_SID", expires: 60 * 60 * 20 }
+    options: SessionOptions = {
+      sessionName: "_SID",
+      expires: 60 * 60 * 20,
+    }
   ) {
     this.sessionData = null;
     this.store = store;
@@ -134,6 +139,7 @@ export class Session {
    *
    * @param key string key
    * @returns string
+   * @throws SessionError
    */
   get(key?: string) {
     if (this.sessionData === null) {
@@ -151,12 +157,13 @@ export class Session {
    * @param key string
    * @param value string
    * @returns Session
+   * @throws SessionError
    */
-  set(key: string, value: string | number) {
+  set(key: string, value: SessionKeyValue) {
     if (this.sessionData === null) {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
-    const newData: { [key: string]: string | number } = {};
+    const newData: { [key: string]: SessionKeyValue } = {};
     newData[key] = value;
     this.sessionData = { ...this.sessionData, ...newData };
 
@@ -167,6 +174,7 @@ export class Session {
    * Removes param from session
    * @param key string
    * @returns Session
+   * @throws SessionError
    */
   remove(key: string) {
     if (this.sessionData === null) {
@@ -178,16 +186,45 @@ export class Session {
   }
 
   /**
+   * Session Id
+   *
+   * @returns string - Session id
+   * @throws SessionError
+   */
+  id() {
+    if (!this.sessionId) {
+      throw new SessionError(_ERROR_SESSION_ID);
+    }
+    return this.sessionId;
+  }
+
+  /**
+   * Get Grpc Metadata
+   *
+   * @returns Metadata
+   */
+  getMetadata(): Metadata {
+    let metadata = new Metadata();
+    metadata.set(
+      "set-cookie",
+      cookie.serialize(this.sessionName, this.sessionId, this.options.cookie)
+    );
+
+    return metadata;
+  }
+
+  /**
    * Saves session to the provided store
    *
    * @returns Promise
+   * @throws SessionError
    */
   async save() {
     if (this.sessionData === null) {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
-    // Sets expiration time in session data
+    // Sets expiration time inside session data
     if (this.options.expires) {
       this.set("exp", moment().unix() + this.options.expires);
     }
