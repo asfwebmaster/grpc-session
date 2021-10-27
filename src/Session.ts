@@ -247,13 +247,13 @@ export class Session {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
-    if (this.options.expires) {
-      this.options.expires;
-      this.options.cookie = {
-        ...this.options.cookie,
-        maxAge: this.options.expires,
-      };
-    }
+    // if (this.options.expires) {
+    //   this.options.expires;
+    //   this.options.cookie = {
+    //     ...this.options.cookie,
+    //     maxAge: this.options.expires,
+    //   };
+    // }
 
     let metadata = new Metadata();
     metadata.set(
