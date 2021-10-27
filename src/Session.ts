@@ -94,11 +94,13 @@ export class Session {
     const cookiesHeader = call.metadata.get("cookies").toString();
     const cookies = cookie.parse(cookiesHeader);
 
+    console.log("1:", cookies);
+
     // Whether to load or start new session
     if (cookies[this.sessionName]) {
       this.sessionId = cookies[this.sessionName];
       this.sessionData = await this.store.get(this.sessionId);
-
+      console.log("2:", this.sessionData);
       // Session does not exist in the store
       // Let's start a new session
       if (this.sessionData === null) {
