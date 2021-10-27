@@ -11,6 +11,7 @@ import {
   _ERROR_SESSION_EXPIRED,
   _ERROR_SESSION_ID,
 } from "./constants";
+import { ServerSurfaceCall } from "@grpc/grpc-js/build/src/server-call";
 
 class SessionError extends Error {
   private __proto__?: SessionError;
@@ -72,13 +73,48 @@ export class Session {
    * @param sessionData
    * @returns Session
    */
-  start(sessionData?: SessionData) {
+  private start(sessionData?: SessionData) {
     this.sessionId = nanoid();
 
     this.sessionData = {};
     if (sessionData) {
       this.sessionData = sessionData;
     }
+    return this;
+  }
+
+  /**
+   * Will try to restore session from id or will create a new one
+   *
+   * @param call ServerSurfaceCall
+   * @returns Session
+   */
+  async gRPC(call: ServerSurfaceCall) {
+    // Check cookies for session id
+    const cookiesHeader = call.metadata.get("cookies").toString();
+    const cookies = cookie.parse(cookiesHeader);
+
+    // Whether to load or start new session
+    if (cookies[this.sessionName]) {
+      this.sessionId = cookies[this.sessionName];
+      this.sessionData = await this.store.get(this.sessionId);
+
+      // Session does not exist in the store
+      // Let's start a new session
+      if (this.sessionData === null) {
+        this.start();
+      }
+    } else {
+      // SessionId does not exist in cookies header start new session
+      this.start();
+    }
+
+    // Send cookie header
+    call.sendMetadata(this.getMetadata());
+
+    // Save session
+    await this.save();
+
     return this;
   }
 
@@ -202,8 +238,21 @@ export class Session {
    * Get Grpc Metadata
    *
    * @returns Metadata
+   * @throws SessionError
    */
   getMetadata(): Metadata {
+    if (this.sessionData === null) {
+      throw new SessionError(_ERROR_SESSION_DATA);
+    }
+
+    if (this.options.expires) {
+      this.options.expires;
+      this.options.cookie = {
+        ...this.options.cookie,
+        maxAge: this.options.expires,
+      };
+    }
+
     let metadata = new Metadata();
     metadata.set(
       "set-cookie",
@@ -214,7 +263,7 @@ export class Session {
   }
 
   /**
-   * Saves session to the provided store
+   * Saves session to the store
    *
    * @returns Promise
    * @throws SessionError
