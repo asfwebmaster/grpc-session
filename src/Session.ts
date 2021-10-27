@@ -112,7 +112,7 @@ export class Session {
     }
 
     // Send cookie header
-    call.sendMetadata(this.getMetadata());
+    // call.sendMetadata(this.getMetadata());
 
     // Save session
     await this.save();
