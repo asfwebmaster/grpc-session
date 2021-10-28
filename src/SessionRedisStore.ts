@@ -1,11 +1,11 @@
-// Session Store
+// Session Redis Store
 import { SessionStoreError, Store } from "./Store";
 import Redis, { ValueType } from "ioredis";
 
 import type { SessionData } from "./Session";
 
 /**
- * Redis Session Store Class
+ * Session Redis Store Class
  */
 export class SessionRedisStore implements Store {
   redis: Redis.Redis;
@@ -16,10 +16,10 @@ export class SessionRedisStore implements Store {
   }
 
   /**
-   * Get Session
+   * Gets Session
    *
-   * @param sessionId Identification Id
-   * @returns Promise
+   * @param sessionId
+   * @returns Promise<SessionData>
    */
   async get(sessionId: string) {
     const data = await this.redis.get(sessionId);
@@ -30,10 +30,10 @@ export class SessionRedisStore implements Store {
   }
 
   /**
-   * Sets a new session to the store
+   * Inserts Session
    *
-   * @param sessionId Identification Id
-   * @param data data to store
+   * @param sessionId
+   * @param data
    * @returns Promise<boolean>
    */
   async set(sessionId: string, data: SessionData) {
@@ -64,10 +64,10 @@ export class SessionRedisStore implements Store {
   }
 
   /**
-   * Delete session from the store
+   * Deletes session
    *
-   * @param sessionId Identification Id
-   * @returns Promise
+   * @param sessionId
+   * @returns Promise<number>
    */
   async delete(sessionId: string) {
     try {

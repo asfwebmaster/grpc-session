@@ -3,23 +3,25 @@ import { Metadata } from "@grpc/grpc-js";
 import cookie from "cookie";
 import moment from "moment";
 import { nanoid } from "nanoid";
+import { ServerSurfaceCall } from "@grpc/grpc-js/build/src/server-call";
 
 import { Store } from "./Store";
 import {
-  DEV,
   _ERROR_SESSION_DATA,
   _ERROR_SESSION_EXPIRED,
   _ERROR_SESSION_ID,
 } from "./constants";
-import { ServerSurfaceCall } from "@grpc/grpc-js/build/src/server-call";
 
-class SessionError extends Error {
+/**
+ * Session Error Class
+ */
+export class SessionError extends Error {
   private __proto__?: SessionError;
   constructor(message?: string) {
     // 'Error' breaks prototype chain here
     super(message);
 
-    // restore prototype chain
+    // Restore prototype chain
     const proto = new.target.prototype;
 
     if (Object.setPrototypeOf) {
@@ -30,6 +32,9 @@ class SessionError extends Error {
   }
 }
 
+/**
+ * Session Options Interface
+ */
 export interface SessionOptions {
   expires?: number; // Session expiration time in seconds
   sessionName?: string;
@@ -39,19 +44,22 @@ export type Primitive = string | number | boolean | null;
 export type SessionKeyValue = Primitive | { [key: string]: Primitive };
 export type SessionData = { [key: string]: SessionKeyValue } | null;
 
+/**
+ * Session class
+ */
 export class Session {
-  private sessionData: SessionData; // stores session data after loading it from the store
-  private sessionName: string; // session name default is _SID
-  private sessionId: string; // stores session id if found in metadata
-  private store: Store; // Store instance
+  private sessionData: SessionData; // Stores session data
+  private sessionName: string; // Session name
+  private sessionId: string; // Session id
+  private store: Store; // Store Instance
 
-  options: SessionOptions; // sessionName and expiration time can be set here
+  options: SessionOptions; // Session options
 
   /**
    * Session
    *
    * @param store Session Store
-   * @param options {sessionName:"_SID", expires: add expiration in time seconds exp: 60*60*20}
+   * @param options {sessionName:"_SID", expires: "Time in seconds: 60*60*20"}
    */
   constructor(
     store: Store,
@@ -88,7 +96,7 @@ export class Session {
    * Will try to restore session from id or will create a new one
    *
    * @param call ServerSurfaceCall
-   * @returns Session
+   * @returns Promise<Session>
    */
   async gRPC(call: ServerSurfaceCall) {
     // Check cookies for session id
@@ -125,7 +133,7 @@ export class Session {
   }
 
   /**
-   * Get session param
+   * Get session key
    *
    * @param key string key
    * @returns string
@@ -142,7 +150,7 @@ export class Session {
   }
 
   /**
-   * Sets new session param
+   * Sets new session key
    *
    * @param key string
    * @param value string
@@ -161,7 +169,8 @@ export class Session {
   }
 
   /**
-   * Removes param from session
+   * Removes key from session
+   *
    * @param key string
    * @returns Session
    * @throws SessionError
@@ -176,9 +185,9 @@ export class Session {
   }
 
   /**
-   * Session Id
+   * Gets session id
    *
-   * @returns string - Session id
+   * @returns string
    * @throws SessionError
    */
   id() {
@@ -220,9 +229,9 @@ export class Session {
   }
 
   /**
-   * Saves session to the store
+   * Saves Session
    *
-   * @returns Promise
+   * @returns Promise<boolean>
    * @throws SessionError
    */
   async save() {
@@ -239,9 +248,9 @@ export class Session {
   }
 
   /**
-   * Deletes session
+   * Deletes Session
    *
-   * @returns Promise
+   * @returns Promise<boolean>
    */
   destroy() {
     return this.store.delete(this.sessionId);

@@ -1,23 +1,30 @@
+// Store
 import { SessionData } from "./Session";
 
+/**
+ * Session Store Interface
+ */
 export interface Store {
-  // Retrieve key from the store
+  // Gets Session
   get(sessionId: string): Promise<SessionData> | SessionData;
 
-  // Sets session to the store
+  // Inserts Session
   set(sessionId: string, data: SessionData): Promise<boolean> | boolean;
 
-  // Removes a key from the store
+  // Deletes Session
   delete(sessionId: string): Promise<boolean> | boolean;
 }
 
+/**
+ * Session Store Error Class
+ */
 export class SessionStoreError extends Error {
   private __proto__?: SessionStoreError;
   constructor(message?: string) {
     // 'Error' breaks prototype chain here
     super(message);
 
-    // restore prototype chain
+    // Restore prototype chain
     const proto = new.target.prototype;
 
     if (Object.setPrototypeOf) {
