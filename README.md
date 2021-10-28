@@ -61,11 +61,10 @@ function main() {
 function getServer() {
   const server = new grpc.Server();
   server.addService(authPackage.AuthService.service, {
-  Login: async (_call, callback) => {
-    console.log(_call.metadata.get("cookie"));
+  Login: async (call, callback) => {
 
     // Check for existing session or create new one if doesn't exist
-    await Session.gRPC(_call);
+    await Session.gRPC(call);
 
     // Save some data in session
     await Session.set("userId", 10).save();
@@ -127,7 +126,7 @@ function getServer() {
 
   // Add Services Here
   server.addService(grpcPackage.SomeService.service, {
-  ListSome: async ({ metadata }, callback) => {
+  ListSome: async (call, callback) => {
     try {
         // Init Session
         await Session.gRPC(call);
