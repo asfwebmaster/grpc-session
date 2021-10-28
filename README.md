@@ -1,7 +1,5 @@
 # GRPC Session - Beta
 
-
-
 ## Installation:
 ```
 yarn add @asfweb/grpc-session
