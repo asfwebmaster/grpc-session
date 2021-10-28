@@ -209,8 +209,11 @@ export class Session {
 
     let metadata = new Metadata();
     metadata.set(
-      "set-cookie",
-      cookie.serialize(this.sessionName, this.sessionId, this.options.cookie)
+      "Set-Cookie",
+      cookie.serialize(this.sessionName, this.sessionId, {
+        path: "/",
+        httpOnly: true,
+      })
     );
 
     return metadata;
