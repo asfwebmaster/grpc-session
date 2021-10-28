@@ -1,7 +1,7 @@
 # GRPC Session - alpha
 
 ## Installation:
-```
+```TypeScript
 yarn add @asfweb/grpc-session
 ```
 or
@@ -11,7 +11,7 @@ npm install @asfweb/grpc-session --save
 
 ## Usage:
 
-```
+```TypeScript
 // Sessions.ts
 
 import { Session, SessionRedisStore } from "@asfweb/grpc-session";
@@ -26,7 +26,7 @@ export default session;
 ```
 
 #### Create session:
-```
+```TypeScript
 // AuthServices.ts
 import Session from "../lib/Session";
 
@@ -52,7 +52,7 @@ export default AuthService;
 
 #### Validate session
 
-```
+```TypeScript
 // SomeService.ts
 import Session from "../lib/Session";
 
