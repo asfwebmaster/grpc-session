@@ -33,12 +33,16 @@ import Session from "../lib/Session";
 export const AuthService: AuthServiceHandlers = {
   Login: async (_call, callback) => {
     
+    // Init Session
+    await Session.gRPC(call);
+
+    // After session is started, you can save, remove data from it 
+    await Session.set('key', {test:1}).set('test2', true).save();
+ 
     ...other code
-    // Creates new session and saves it in the store
-    await Session.start({ userId: 10 }).save();
 
     return callback(null, {
-      sessionId: Session.sessionId,
+        session: Session.get()
     });
   },
 };
@@ -55,10 +59,8 @@ import Session from "../lib/Session";
 export const SomeService: SomeServiceHandlers = {
   ListSome: async ({ metadata }, callback) => {
     try {
-        // Expecting metadata['cookies'] = '_SID=9213023981'; 
-        // Checks if session exist in the store, 
-        // throws an error if it doesn't
-        await Session.validate(metadata);
+        // Init Session
+        await Session.gRPC(call);
 
         // Add Session Data
         // chained

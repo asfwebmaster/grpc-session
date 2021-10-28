@@ -94,79 +94,30 @@ export class Session {
     const cookiesHeader = call.metadata.get("cookies").toString();
     const cookies = cookie.parse(cookiesHeader);
 
-    console.log("1:", call.metadata);
-
     // Whether to load or start new session
     if (cookies[this.sessionName]) {
       this.sessionId = cookies[this.sessionName];
       this.sessionData = await this.store.get(this.sessionId);
-      console.log("2:", this.sessionData);
       // Session does not exist in the store
       // Let's start a new session
       if (this.sessionData === null) {
         this.start();
+      } else {
+        // Remove session if is expired
+        if (this.sessionData.exp && this.sessionData.exp < moment().unix()) {
+          await this.store.delete(this.sessionId);
+          this.start();
+        }
       }
     } else {
       // SessionId does not exist in cookies header start new session
       this.start();
     }
 
-    // Send cookie header
-    // call.sendMetadata(this.getMetadata());
+    // Sends cookie header
+    call.sendMetadata(this.getMetadata());
 
     // Save session
-    await this.save();
-
-    return this;
-  }
-
-  /**
-   * Validates session
-   * throws an error if session does not exist
-   *
-   * @param metadata gRPC Metadata
-   * @returns Session
-   */
-  async validate(metadata: Metadata) {
-    // Cookies are passed in metadata as string
-    // lets parse them and look for our sessionName key
-    // If cookie with sessionName does not exist in cookies we throw an error
-    const cookiesMetadata = metadata.get("cookies").toString();
-    const cookies = cookie.parse(cookiesMetadata);
-
-    // TODO: check Authorization header as well
-
-    if (!cookies[this.sessionName]) {
-      if (DEV) {
-        console.log("DEBUG: Could not find Session id in cookies.");
-      }
-      throw new SessionError(_ERROR_SESSION_ID);
-    }
-
-    this.sessionId = cookies[this.sessionName];
-    this.sessionData = await this.store.get(this.sessionId);
-
-    // Seems that session does not exist in the store, we throw an error
-    if (this.sessionData === null) {
-      if (DEV) {
-        console.log("DEBUG: Session has not been found in the store.");
-      }
-      throw new SessionError(_ERROR_SESSION_DATA);
-    }
-
-    // Remove session if is expired
-    if (this.sessionData.exp && this.sessionData.exp < moment().unix()) {
-      if (DEV) {
-        console.log(
-          "DEBUG: Session has been expired and will be removed from the store."
-        );
-      }
-      await this.store.delete(this.sessionId);
-      throw new SessionError(_ERROR_SESSION_EXPIRED);
-    }
-
-    // NOTE - needs re-thinking two saves calls would be made if need to add something to the session
-    // Updates session expiration time.
     await this.save();
 
     return this;
@@ -247,13 +198,13 @@ export class Session {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
-    // if (this.options.expires) {
-    //   this.options.expires;
-    //   this.options.cookie = {
-    //     ...this.options.cookie,
-    //     maxAge: this.options.expires,
-    //   };
-    // }
+    if (this.options.expires) {
+      this.options.expires;
+      this.options.cookie = {
+        ...this.options.cookie,
+        maxAge: this.options.expires,
+      };
+    }
 
     let metadata = new Metadata();
     metadata.set(
