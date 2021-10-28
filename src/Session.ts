@@ -92,7 +92,7 @@ export class Session {
    */
   async gRPC(call: ServerSurfaceCall) {
     // Check cookies for session id
-    const cookiesHeader = call.metadata.get("cookies").toString();
+    const cookiesHeader = call.metadata.get("cookie").toString();
     const cookies = cookie.parse(cookiesHeader);
 
     // Whether to load or start new session
