@@ -58,7 +58,7 @@ export class Session {
     options: SessionOptions = {
       sessionName: "_SID",
       expires: 60 * 60 * 20,
-      cookie: { path: "/" },
+      cookie: { path: "/", httpOnly: true },
     }
   ) {
     this.sessionData = null;
