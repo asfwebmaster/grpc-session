@@ -203,7 +203,7 @@ export class Session {
       this.options.cookie = {
         ...this.options.cookie,
         maxAge: this.options.expires,
-        expires: new Date(moment(this.options.expires).toDate()),
+        expires: new Date(moment.unix(this.options.expires).toDate()),
       };
     }
 
