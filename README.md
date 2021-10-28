@@ -1,7 +1,9 @@
-# GRPC Session - alpha
+# GRPC Session - Beta
+
+
 
 ## Installation:
-```TypeScript
+```
 yarn add @asfweb/grpc-session
 ```
 or
@@ -13,50 +15,120 @@ npm install @asfweb/grpc-session --save
 
 ```TypeScript
 // Sessions.ts
-
 import { Session, SessionRedisStore } from "@asfweb/grpc-session";
 
 // Creates session store
 const sessionStore = new SessionRedisStore({ password: "12345" });
 
-// Creates session object
+// Creates session
 const session = new Session(sessionStore, { expires: 60 * 30 /* In seconds: 60 seconds * 30 = 30 min. */ });
 
 export default session;
 ```
 
-#### Create session:
+#### Auth Service:
 ```TypeScript
-// AuthServices.ts
-import Session from "../lib/Session";
+// AuthService.ts
+import path from "path";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { ProtoGrpcType } from "./proto/auth";
+import Session from "./lib/Session";
 
-export const AuthService: AuthServiceHandlers = {
+const PORT = 9060;
+const PROTO_FILE = "./proto/auth.proto";
+
+const packageDef = protoLoader.loadSync(path.resolve(__dirname, PROTO_FILE));
+const grpcObj = grpc.loadPackageDefinition(
+  packageDef
+) as unknown as ProtoGrpcType;
+const authPackage = grpcObj.auth.v1;
+
+function main() {
+  const server = getServer();
+  server.bindAsync(
+    `0.0.0.0:${PORT}`,
+    grpc.ServerCredentials.createInsecure(),
+    (err, port) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log(`Your auth server has started on port ${port}`);
+      server.start();
+    }
+  );
+}
+
+function getServer() {
+  const server = new grpc.Server();
+  server.addService(authPackage.AuthService.service, {
   Login: async (_call, callback) => {
+    console.log(_call.metadata.get("cookie"));
+
+    // Check for existing session or create new one if doesn't exist
+    await Session.gRPC(_call);
+
+    // Save some data in session
+    await Session.set("userId", 10).save();
     
-    // Init Session
-    await Session.gRPC(call);
-
-    // After session is started, you can save, remove data from it 
-    await Session.set('key', {test:1}).set('test2', true).save();
- 
-    ...other code
-
     return callback(null, {
-        session: Session.get()
+      sessionId: Session.id(),
     });
   },
-};
+});
 
-export default AuthService;
+  return server;
+}
+
+main();
 ```
 
-#### Validate session
+#### Some Service
 
 ```TypeScript
-// SomeService.ts
-import Session from "../lib/Session";
+// SomeService.ts 
+import path from "path";
+import * as grpc from "@grpc/grpc-js";
+import * as protoLoader from "@grpc/proto-loader";
+import { ProtoGrpcType } from "./proto/some";
 
-export const SomeService: SomeServiceHandlers = {
+const PORT = 9070;
+const PROTO_FILE = "../../proto/some.proto";
+
+const packageDef = protoLoader.loadSync(path.resolve(__dirname, PROTO_FILE));
+
+const grpcObj = grpc.loadPackageDefinition(
+  packageDef
+) as unknown as ProtoGrpcType;
+const grpcPackage = grpcObj.some.v1;
+
+function main() {
+  const server = getServer();
+  server.bindAsync(
+    `0.0.0.0:${PORT}`,
+    grpc.ServerCredentials.createInsecure(),
+    (err, port) => {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      console.log(`Your some server as started on port ${port}`);
+      server.start();
+    }
+  );
+}
+
+/**
+ * Creates a gRPC server
+ *
+ * @returns gRPC Server
+ */
+function getServer() {
+  const server = new grpc.Server();
+
+  // Add Services Here
+  server.addService(grpcPackage.SomeService.service, {
   ListSome: async ({ metadata }, callback) => {
     try {
         // Init Session
@@ -93,10 +165,13 @@ export const SomeService: SomeServiceHandlers = {
       }
     }
   }
-};
+});
 
-export default SomeService;
+  return server;
+}
 
+// Start
+main();
 ```
 
 #### TODO:
