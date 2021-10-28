@@ -199,21 +199,21 @@ export class Session {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
 
-    if (this.options.expires) {
-      this.options.expires;
-      this.options.cookie = {
-        ...this.options.cookie,
-        maxAge: this.options.expires,
-      };
-    }
+    const defaultCookiesOptions = {
+      path: "/",
+      httpOnly: true,
+    };
+
+    const options = {
+      ...defaultCookiesOptions,
+      maxAge: this.options.expires || 0,
+      ...this.options.cookie,
+    };
 
     let metadata = new Metadata();
     metadata.set(
       "Set-Cookie",
-      cookie.serialize(this.sessionName, this.sessionId, {
-        path: "/",
-        httpOnly: true,
-      })
+      cookie.serialize(this.sessionName, this.sessionId, options)
     );
 
     return metadata;
