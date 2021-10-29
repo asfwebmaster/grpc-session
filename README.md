@@ -129,7 +129,7 @@ function getServer() {
   ListSome: async (call, callback) => {
     try {
         // Init Session
-        await Session.gRPC(call);
+        await Session.gRPC(call, {someKey:"someKeyToOverwrite"});
 
         // Add Session Data
         // chained

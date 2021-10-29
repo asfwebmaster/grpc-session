@@ -98,7 +98,7 @@ export class Session {
    * @param call ServerSurfaceCall
    * @returns Promise<Session>
    */
-  async gRPC(call: ServerSurfaceCall) {
+  async gRPC(call: ServerSurfaceCall, sessionData?: SessionData) {
     // Check cookies for session id
     const cookiesHeader = call.metadata.get("cookie").toString();
     const cookies = cookie.parse(cookiesHeader);
@@ -125,6 +125,9 @@ export class Session {
 
     // Sends cookie header
     call.sendMetadata(this.getMetadata());
+
+    // Initial session data
+    this.sessionData = { ...this.sessionData, ...sessionData };
 
     // Save session
     await this.save();
