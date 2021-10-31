@@ -1,5 +1,6 @@
 // Session
 import { Metadata } from "@grpc/grpc-js";
+import { MD5 } from "crypto-js";
 import cookie from "cookie";
 import moment from "moment";
 import { nanoid } from "nanoid";
@@ -38,7 +39,9 @@ export class SessionError extends Error {
 export interface SessionOptions {
   expires?: number; // Session expiration time in seconds
   sessionName?: string;
+  checkOrigin: boolean;
   cookie?: cookie.CookieSerializeOptions;
+  debug: boolean;
 }
 export type Primitive = string | number | boolean | null;
 export type SessionKeyValue = Primitive | { [key: string]: Primitive };
@@ -48,6 +51,7 @@ export type SessionData = { [key: string]: SessionKeyValue } | null;
  * Session class
  */
 export class Session {
+  private metadata: Metadata;
   private sessionData: SessionData; // Stores session data
   private sessionName: string; // Session name
   private sessionId: string; // Session id
@@ -65,8 +69,10 @@ export class Session {
     store: Store,
     options: SessionOptions = {
       sessionName: "_SID",
+      checkOrigin: true,
       expires: 60 * 60 * 20,
       cookie: { path: "/", httpOnly: true },
+      debug: false,
     }
   ) {
     this.sessionData = null;
@@ -74,6 +80,7 @@ export class Session {
     this.sessionId = "";
     this.sessionName = options.sessionName || "_SID";
     this.options = options;
+    this.metadata = new Metadata();
   }
 
   /**
@@ -100,7 +107,9 @@ export class Session {
    */
   async gRPC(call: ServerSurfaceCall, sessionData?: SessionData) {
     // Check cookies for session id
-    const cookiesHeader = call.metadata.get("cookie").toString();
+
+    this.metadata = call.metadata;
+    const cookiesHeader = this.metadata.get("cookie").toString();
     const cookies = cookie.parse(cookiesHeader);
 
     // Whether to load or start new session
@@ -114,11 +123,27 @@ export class Session {
       } else {
         // Remove session if is expired
         if (this.sessionData.exp && this.sessionData.exp < moment().unix()) {
+          if (this.options.debug) {
+            console.log(
+              "Start new session: Previous session has been expired."
+            );
+          }
           await this.store.delete(this.sessionId);
+          this.start();
+        }
+
+        // Check origin
+        if (this.options.checkOrigin && this.get("hash") !== this._MD5_hash()) {
+          if (this.options.debug) {
+            console.log("Start new session: Session has different origin.");
+          }
           this.start();
         }
       }
     } else {
+      if (this.options.debug) {
+        console.log("Start new session: Session cookie does not exist.");
+      }
       // SessionId does not exist in cookies header start new session
       this.start();
     }
@@ -247,6 +272,10 @@ export class Session {
       this.set("exp", moment().unix() + this.options.expires);
     }
 
+    if (this.options.checkOrigin) {
+      this.set("hash", this._MD5_hash());
+    }
+
     return this.store.set(this.sessionId, this.sessionData);
   }
 
@@ -257,5 +286,17 @@ export class Session {
    */
   destroy() {
     return this.store.delete(this.sessionId);
+  }
+
+  /**
+   * A md5 hash of sessionId : user-agent header
+   *
+   * @returns string
+   */
+  private _MD5_hash() {
+    const userAgent = this.metadata.get("user-agent").toString();
+    const origin = this.metadata.get("origin").toString();
+    const hash = MD5(`${this.sessionId}:${userAgent}:${origin}`).toString();
+    return hash;
   }
 }

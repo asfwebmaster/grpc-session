@@ -15,7 +15,9 @@ npm install @asfweb/grpc-session --save
 // Sessions.ts
 import { Session, SessionRedisStore } from "@asfweb/grpc-session";
 
-// Creates session store
+// Creates Session Store
+// SessionRedisStore is using ioredis under the hood so all options for ioredis are available
+// https://github.com/luin/ioredis
 const sessionStore = new SessionRedisStore({ password: "12345" });
 
 // Creates session
