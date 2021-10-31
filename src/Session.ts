@@ -39,7 +39,7 @@ export class SessionError extends Error {
 export interface SessionOptions {
   expires?: number; // Session expiration time in seconds
   sessionName?: string;
-  checkOrigin: boolean;
+  checkOrigin?: boolean;
   cookie?: cookie.CookieSerializeOptions;
   debug?: boolean;
 }
