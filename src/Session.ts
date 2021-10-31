@@ -41,7 +41,7 @@ export interface SessionOptions {
   sessionName?: string;
   checkOrigin: boolean;
   cookie?: cookie.CookieSerializeOptions;
-  debug: boolean;
+  debug?: boolean;
 }
 export type Primitive = string | number | boolean | null;
 export type SessionKeyValue = Primitive | { [key: string]: Primitive };
