@@ -12,6 +12,7 @@ import {
   _ERROR_SESSION_EXPIRED,
   _ERROR_SESSION_ID,
 } from "./constants";
+import { SessionRedisStore } from ".";
 
 /**
  * Session Error Class
@@ -45,7 +46,7 @@ export interface SessionOptions {
 }
 export type Primitive = string | number | boolean | null;
 export type SessionKeyValue = Primitive | { [key: string]: Primitive };
-export type SessionData = { [key: string]: SessionKeyValue } | null;
+export type SessionData = { [key: string]: SessionKeyValue } | null | any;
 
 /**
  * Session class
@@ -167,7 +168,7 @@ export class Session {
    * @returns string
    * @throws SessionError
    */
-  get(key?: string) {
+  get<T>(key?: string): T {
     if (this.sessionData === null) {
       throw new SessionError(_ERROR_SESSION_DATA);
     }
