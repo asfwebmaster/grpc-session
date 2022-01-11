@@ -12,7 +12,7 @@ import {
   _ERROR_SESSION_EXPIRED,
   _ERROR_SESSION_ID,
 } from "./constants";
-import { SessionRedisStore } from ".";
+// import { SessionRedisStore } from ".";
 
 /**
  * Session Error Class
@@ -240,6 +240,8 @@ export class Session {
     const defaultCookiesOptions = {
       path: "/",
       httpOnly: true,
+      secure: true,
+      SameSite: "Lax",
     };
 
     const options = {
