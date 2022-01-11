@@ -240,8 +240,6 @@ export class Session {
     const defaultCookiesOptions = {
       path: "/",
       httpOnly: true,
-      // secure: true,
-      SameSite: "None",
     };
 
     const options = {
